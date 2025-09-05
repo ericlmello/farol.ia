@@ -1,0 +1,55 @@
+name: farol-realtime
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: farol-backend:local
+    container_name: farol-backend
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "${BACKEND_HOST_PORT:-8011}:8000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      MODEL: ${MODEL:-gpt-realtime-2025-08-28}
+      VOICE: ${VOICE:-marin}
+      SILENCE_MS: ${SILENCE_MS:-600}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./backend:/app
+      - ${DIRETORIO_AUDIO}:/app/audio_gerado
+      - ${DIRETORIO_IMG}:/app/screenshots_gerados
+    secrets:
+      - source: openai_api_key
+        target: /run/secrets/openai_api_key
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend_streamlit
+    image: farol-frontend:local
+    container_name: farol-frontend
+    ports:
+      - "8501:8501"
+    environment:
+        BACKEND_PUBLIC_URL: ${BACKEND_PUBLIC_URL:-http://localhost:${BACKEND_HOST_PORT:-8011}}
+        MODEL: ${MODEL:-gpt-realtime-2025-08-28}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  default:
+    name: farol-net
+
+secrets:
+  openai_api_key:
+    file: ./openai_api_key.txt
