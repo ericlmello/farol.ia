@@ -67,8 +67,18 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+# Define o caminho para o diretório raiz do projeto (um nível acima da pasta 'backend')
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Monta o diretório 'static' usando o caminho absoluto
+app.mount(
+    "/static",
+    StaticFiles(directory=BASE_DIR / "static"),
+    name="static"
+)
+
+# Aponta para o diretório de 'templates' usando o caminho absoluto
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 def get_api_key() -> str:
     if not OPENAI_API_KEY:
