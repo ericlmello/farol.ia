@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Configurações ---
-MODEL = os.getenv("MODEL", "gpt-4o") 
+MODEL = os.getenv("MODEL", "gpt-4o")
 VOICE = os.getenv("VOICE", "marin")
 SILENCE_MS = int(os.getenv("SILENCE_MS", "600"))
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -68,18 +68,23 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"],
 )
-# Define o caminho para o diretório raiz do projeto (um nível acima da pasta 'backend')
-BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Monta o diretório 'static' usando o caminho absoluto
+# --- INÍCIO DA CORREÇÃO ---
+
+# Define o caminho para o diretório ATUAL do arquivo (a pasta 'backend')
+APP_DIR = Path(__file__).resolve().parent
+
+# Monta o diretório 'static' que está DENTRO da pasta 'backend'
 app.mount(
     "/static",
-    StaticFiles(directory=BASE_DIR / "static"),
+    StaticFiles(directory=APP_DIR / "static"),
     name="static"
 )
 
-# Aponta para o diretório de 'templates' usando o caminho absoluto
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
+# Aponta para o diretório de 'templates' que também está DENTRO da pasta 'backend'
+templates = Jinja2Templates(directory=APP_DIR / "templates")
+
+# --- FIM DA CORREÇÃO ---
 
 def get_api_key() -> str:
     if not OPENAI_API_KEY:
@@ -122,5 +127,4 @@ class LogEvent(BaseModel):
 async def collect_logs(event: LogEvent):
     logger.info("client.log %s", json.dumps(event.dict(), ensure_ascii=False))
     return {"ok": True}
-
 
